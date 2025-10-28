@@ -2,6 +2,8 @@ import streamlit as st
 from langchain_openai import OpenAI, OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+from langchain.evaluation.qa import QAEvalChain
 
 def generate_response(
     uploaded_file,
@@ -28,32 +30,41 @@ def generate_response(
     # create a retriever interface
     retriever = db.as_retriever()
     
-    # get relevant documents
-    relevant_docs = retriever.invoke(query_text)
+    # create a real QA dictionary
+    real_qa = [
+        {
+            "question": query_text,
+            "answer": response_text
+        }
+    ]
     
-    # create LLM
-    llm = OpenAI(api_key=openai_api_key)
+    # regular QA chain
+    qachain = RetrievalQA.from_chain_type(
+        llm=OpenAI(api_key=openai_api_key),
+        chain_type="stuff",
+        retriever=retriever,
+        input_key="question"
+    )
     
-    # build context from retrieved documents
-    context = "\n".join([doc.page_content for doc in relevant_docs])
+    # predictions
+    predictions = qachain.apply(real_qa)
     
-    # create prompt
-    prompt = f"""Answer the following question based on the provided context:
-
-Context: {context}
-
-Question: {query_text}
-
-Answer:"""
+    # create an eval chain
+    eval_chain = QAEvalChain.from_llm(
+        llm=OpenAI(api_key=openai_api_key)
+    )
+    # have it grade itself
+    graded_outputs = eval_chain.evaluate(
+        real_qa,
+        predictions,
+        question_key="question",
+        prediction_key="result",
+        answer_key="answer"
+    )
     
-    # get answer from LLM
-    ai_answer = llm.invoke(prompt)
-    
-    # prepare response
     response = {
-        "question": query_text,
-        "expected_answer": response_text,
-        "ai_answer": ai_answer
+        "predictions": predictions,
+        "graded_outputs": graded_outputs
     }
     
     return response
@@ -116,7 +127,7 @@ with st.form(
             del openai_api_key
             
 if len(result):
-     st.write("Question")
+    st.write("Question")
     st.info(response["predictions"][0]["question"])
     st.write("Real answer")
     st.info(response["predictions"][0]["answer"])
