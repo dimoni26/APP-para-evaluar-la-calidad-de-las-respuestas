@@ -78,10 +78,9 @@ st.title("Evalua una aplicación RAG")
 with st.expander("Evalua la calidad de una aplicación RAG"):
     st.write("""
         
-Para evaluar la calidad de una aplicación RAG, le haremos preguntas cuyas respuestas reales ya conocemos..
+Para evaluar la calidad de una aplicación RAG, le haremos preguntas cuyas respuestas reales ya conocemos.
         
-        That way we can see if the app is producing
-        the right answers or if it is hallucinating.
+De esa manera podemos ver si la aplicación está produciendo las respuestas correctas o si está alucinando.
     """)
 
 uploaded_file = st.file_uploader(
