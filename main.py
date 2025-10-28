@@ -2,9 +2,6 @@ import streamlit as st
 from langchain_openai import OpenAI, OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
 
 def generate_response(
     uploaded_file,
@@ -31,32 +28,32 @@ def generate_response(
     # create a retriever interface
     retriever = db.as_retriever()
     
+    # get relevant documents
+    relevant_docs = retriever.invoke(query_text)
+    
     # create LLM
     llm = OpenAI(api_key=openai_api_key)
     
-    # create prompt template
-    prompt = ChatPromptTemplate.from_template(
-        """Answer the following question based on the provided context:
-        
+    # build context from retrieved documents
+    context = "\n".join([doc.page_content for doc in relevant_docs])
+    
+    # create prompt
+    prompt = f"""Answer the following question based on the provided context:
+
 Context: {context}
 
-Question: {input}
+Question: {query_text}
 
 Answer:"""
-    )
     
-    # create the retrieval chain
-    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
-    retrieval_chain = create_retrieval_chain(retriever, combine_docs_chain)
-    
-    # get predictions
-    result = retrieval_chain.invoke({"input": query_text})
+    # get answer from LLM
+    ai_answer = llm.invoke(prompt)
     
     # prepare response
     response = {
         "question": query_text,
         "expected_answer": response_text,
-        "ai_answer": result["answer"]
+        "ai_answer": ai_answer
     }
     
     return response
