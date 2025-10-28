@@ -129,7 +129,8 @@ with st.form(
 if result:
     resp = result[-1]                     # último resultado válido
     pred = resp["predictions"][0]
-    grade = str(resp["graded_outputs"][0].get("results", "")).upper()
+    grade_raw = resp["graded_outputs"][0].get("results", "")
+    grade = str(grade_raw).strip().upper()   # limpiamos espacios y normalizamos
 
     st.write("Pregunta")
     st.info(pred["question"])
@@ -139,11 +140,12 @@ if result:
     st.info(pred["result"])
     st.write("Entonces, el resultado de la aplicación de IA es:")
 
-    if grade == "CORRECT":
+    if "CORRECT" in grade:
         st.success("✅ Respuesta correcta")
-    elif grade == "INCORRECT":
+    elif "INCORRECT" in grade:
         st.error("❌ Respuesta incorrecta")
     else:
-        st.warning(f"Resultado: {grade}")
+        st.warning(f"Resultado: {grade_raw}")
+
 
 
