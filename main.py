@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_openai import OpenAI
-from langchain_text_splitter import CharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
@@ -22,7 +22,7 @@ def generate_response(
     )
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(
-        openai_api_key=openai_api_key
+        api_key=openai_api_key
     )
     
     # create a vectorstore and store there the texts
@@ -41,7 +41,7 @@ def generate_response(
     
     # regular QA chain
     qachain = RetrievalQA.from_chain_type(
-        llm=OpenAI(openai_api_key=openai_api_key),
+        llm=OpenAI(api_key=openai_api_key),
         chain_type="stuff",
         retriever=retriever,
         input_key="question"
@@ -52,7 +52,7 @@ def generate_response(
     
     # create an eval chain
     eval_chain = QAEvalChain.from_llm(
-        llm=OpenAI(openai_api_key=openai_api_key)
+        llm=OpenAI(api_key=openai_api_key)
     )
     # have it grade itself
     graded_outputs = eval_chain.evaluate(
@@ -77,12 +77,10 @@ st.title("Evalua una aplicación RAG")
 
 with st.expander("Evalua la calidad de una aplicación RAG"):
     st.write("""
-        Para evaluar la calidad de una aplicación RAG,
-        le haremos preguntas para las cuales ya conocemos
-        las respuestas reales.
         
-        De esta manera podemos ver si la aplicación produce
-        respuestas correctas o si está alucinando.
+Para evaluar la calidad de una aplicación RAG, le haremos preguntas cuyas respuestas reales ya conocemos.
+        
+De esa manera podemos ver si la aplicación está produciendo las respuestas correctas o si está alucinando.
     """)
 
 uploaded_file = st.file_uploader(
@@ -130,11 +128,11 @@ with st.form(
             del openai_api_key
             
 if len(result):
-    st.write("Pregunta")
+    st.write("Question")
     st.info(response["predictions"][0]["question"])
-    st.write("Respuesta real")
+    st.write("Real answer")
     st.info(response["predictions"][0]["answer"])
-    st.write("Respuesta proporcionada por la aplicación IA")
+    st.write("Answer provided by the AI App")
     st.info(response["predictions"][0]["result"])
-    st.write("Por lo tanto, la respuesta de la aplicación fue")
+    st.write("Therefore, the AI App answer was")
     st.info(response["graded_outputs"][0]["results"])
