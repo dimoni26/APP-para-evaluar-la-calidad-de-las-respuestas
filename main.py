@@ -3,7 +3,7 @@ from langchain_openai import OpenAI
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains.retrieval_qa.base import RetrievalQA
+from langchain.chains import RetrievalQA
 from langchain.evaluation.qa import QAEvalChain
 
 def generate_response(
