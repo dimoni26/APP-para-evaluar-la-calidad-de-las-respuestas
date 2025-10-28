@@ -126,18 +126,24 @@ with st.form(
             result.append(response)
             del openai_api_key
             
-if len(result):
+if result:
+    resp = result[-1]                     # último resultado válido
+    pred = resp["predictions"][0]
+    grade = str(resp["graded_outputs"][0].get("results", "")).upper()
+
     st.write("Pregunta")
-    st.info(response["predictions"][0]["question"])
+    st.info(pred["question"])
     st.write("Respuesta Real")
-    st.info(response["predictions"][0]["answer"])
+    st.info(pred["answer"])
     st.write("Respuesta Generada por la IA App")
-    st.info(response["predictions"][0]["result"])
+    st.info(pred["result"])
     st.write("Entonces, el resultado de la aplicación de IA es:")
-    label = str(response["graded_outputs"][0]["results"]).upper()
-if label == "CORRECT":
-    st.success("✅ Respuesta correcta")
-else:
-    st.error("❌ Respuesta incorrecta")
+
+    if grade == "CORRECT":
+        st.success("✅ Respuesta correcta")
+    elif grade == "INCORRECT":
+        st.error("❌ Respuesta incorrecta")
+    else:
+        st.warning(f"Resultado: {grade}")
 
 
