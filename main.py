@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_openai import OpenAI
-from langchain_text_splitter import CharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain.evaluation.qa import QAEvalChain
@@ -22,7 +22,7 @@ def generate_response(
     )
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(
-        api_key=openai_api_key
+        openai_api_key=openai_api_key
     )
     
     # create a vectorstore and store there the texts
@@ -41,7 +41,7 @@ def generate_response(
     
     # regular QA chain
     qachain = RetrievalQA.from_chain_type(
-        llm=OpenAI(api_key=openai_api_key),
+        llm=OpenAI(openai_api_key=openai_api_key),
         chain_type="stuff",
         retriever=retriever,
         input_key="question"
@@ -52,7 +52,7 @@ def generate_response(
     
     # create an eval chain
     eval_chain = QAEvalChain.from_llm(
-        llm=OpenAI(api_key=openai_api_key)
+        llm=OpenAI(openai_api_key=openai_api_key)
     )
     # have it grade itself
     graded_outputs = eval_chain.evaluate(
@@ -71,32 +71,34 @@ def generate_response(
     return response
 
 st.set_page_config(
-    page_title="Evalua una aplicación RAG",
+    page_title="Evaluate a RAG App"
 )
-st.title("Evalua una aplicación RAG")
+st.title("Evaluate a RAG App")
 
-with st.expander("Evalua la calidad de una aplicación RAG"):
+with st.expander("Evaluate the quality of a RAG APP"):
     st.write("""
+        To evaluate the quality of a RAG app, we will
+        ask it questions for which we already know the
+        real answers.
         
-Para evaluar la calidad de una aplicación RAG, le haremos preguntas cuyas respuestas reales ya conocemos.
-        
-De esa manera podemos ver si la aplicación está produciendo las respuestas correctas o si está alucinando.
+        That way we can see if the app is producing
+        the right answers or if it is hallucinating.
     """)
 
 uploaded_file = st.file_uploader(
-    "Sube un documento de texto para usar como base de conocimiento:",
+    "Upload a .txt document",
     type="txt"
 )
 
 query_text = st.text_input(
-    "Ingresa una pregunta que ya hayas verificado:",
-    placeholder="Escribe tu pregunta aquí",
+    "Enter a question you have already fact-checked:",
+    placeholder="Write your question here",
     disabled=not uploaded_file
 )
 
 response_text = st.text_input(
-    "Introduzca la respuesta real a la pregunta anterior",
-    placeholder="Escriba la respuesta verificada aquí",
+    "Enter the real answer to the question:",
+    placeholder="Write the confirmed answer here",
     disabled=not uploaded_file
 )
 
@@ -111,12 +113,12 @@ with st.form(
         disabled=not (uploaded_file and query_text)
     )
     submitted = st.form_submit_button(
-        "Enviar",
+        "Submit",
         disabled=not (uploaded_file and query_text)
     )
     if submitted and openai_api_key.startswith("sk-"):
         with st.spinner(
-            "Espere, por favor. Estamos trabajando en ello..."
+            "Wait, please. I am working on it..."
             ):
             response = generate_response(
                 uploaded_file,
