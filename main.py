@@ -33,8 +33,8 @@ def generate_response(
     # create a real QA dictionary
     real_qa = [
         {
-            "question": query_text,
-            "answer": response_text
+            "pregunta": query_text,
+            "respuesta": response_text
         }
     ]
     
@@ -43,7 +43,7 @@ def generate_response(
         llm=OpenAI(api_key=openai_api_key),
         chain_type="stuff",
         retriever=retriever,
-        input_key="question"
+        input_key="pregunta"
     )
     
     # predictions
@@ -57,14 +57,14 @@ def generate_response(
     graded_outputs = eval_chain.evaluate(
         real_qa,
         predictions,
-        question_key="question",
-        prediction_key="result",
-        answer_key="answer"
+        question_key="pregunta",
+        prediction_key="resultado",
+        answer_key="respuesta"
     )
     
     response = {
-        "predictions": predictions,
-        "graded_outputs": graded_outputs
+        "predicciones": predictions,
+        "outputs_cualificados": graded_outputs
     }
     
     return response
@@ -127,11 +127,11 @@ with st.form(
             del openai_api_key
             
 if len(result):
-    st.write("Question")
-    st.info(response["predictions"][0]["question"])
-    st.write("Real answer")
-    st.info(response["predictions"][0]["answer"])
-    st.write("Answer provided by the AI App")
-    st.info(response["predictions"][0]["result"])
-    st.write("Therefore, the AI App answer was")
-    st.info(response["graded_outputs"][0]["results"])
+    st.write("pregunta")
+    st.info(response["predicciones"][0]["pregunta"])
+    st.write("Respuesta Real")
+    st.info(response["Predicciones"][0]["respuesta"])
+    st.write("Respuesta de la IA App")
+    st.info(response["predicciones"][0]["resultado"])
+    st.write("Por lo tanto, la respuesta de la IA es")
+    st.info(response["outputs_cualificados"][0]["resultados"])
