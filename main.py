@@ -116,9 +116,11 @@ with st.form(
             del openai_api_key
             
 if len(result):
-    st.write("Question")
-    st.info(response["question"])
+     st.write("Question")
+    st.info(response["predictions"][0]["question"])
     st.write("Real answer")
-    st.info(response["expected_answer"])
+    st.info(response["predictions"][0]["answer"])
     st.write("Answer provided by the AI App")
-    st.info(response["ai_answer"])
+    st.info(response["predictions"][0]["result"])
+    st.write("Therefore, the AI App answer was")
+    st.info(response["graded_outputs"][0]["results"])
