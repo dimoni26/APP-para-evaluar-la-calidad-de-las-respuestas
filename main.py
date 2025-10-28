@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain_openai import OpenAI
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain.evaluation.qa import QAEvalChain
@@ -22,7 +22,7 @@ def generate_response(
     )
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(
-        openai_api_key=openai_api_key
+        api_key=openai_api_key
     )
     
     # create a vectorstore and store there the texts
@@ -41,7 +41,7 @@ def generate_response(
     
     # regular QA chain
     qachain = RetrievalQA.from_chain_type(
-        llm=OpenAI(openai_api_key=openai_api_key),
+        llm=OpenAI(api_key=openai_api_key),
         chain_type="stuff",
         retriever=retriever,
         input_key="question"
@@ -52,7 +52,7 @@ def generate_response(
     
     # create an eval chain
     eval_chain = QAEvalChain.from_llm(
-        llm=OpenAI(openai_api_key=openai_api_key)
+        llm=OpenAI(api_key=openai_api_key)
     )
     # have it grade itself
     graded_outputs = eval_chain.evaluate(
@@ -138,4 +138,3 @@ if len(result):
     st.info(response["predictions"][0]["result"])
     st.write("Therefore, the AI App answer was")
     st.info(response["graded_outputs"][0]["results"])
-
