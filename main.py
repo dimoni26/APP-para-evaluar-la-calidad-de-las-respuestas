@@ -2,8 +2,8 @@ import streamlit as st
 from langchain_openai import OpenAI, OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain.evaluation.qa import QAEvalChain
+from langchain_community.chains import RetrievalQA
+from langchain_community.evaluation.qa import QAEvalChain
 
 def generate_response(
     uploaded_file,
