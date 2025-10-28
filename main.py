@@ -1,9 +1,10 @@
 import streamlit as st
-from langchain_openai import OpenAI, OpenAIEmbeddings
-from langchain_text_splitters import CharacterTextSplitter
+from langchain_openai import OpenAI
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.chains import RetrievalQA
-from langchain_community.evaluation.qa import QAEvalChain
+from langchain.chains import RetrievalQA
+from langchain.evaluation.qa import QAEvalChain
 
 def generate_response(
     uploaded_file,
@@ -11,10 +12,10 @@ def generate_response(
     query_text,
     response_text
 ):
-    # format uploaded file
+    #format uploaded file
     documents = [uploaded_file.read().decode()]
     
-    # break it in small chunks
+    #break it in small chunks
     text_splitter = CharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=0
