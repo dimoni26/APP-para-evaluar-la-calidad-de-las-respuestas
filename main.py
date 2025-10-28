@@ -1,10 +1,10 @@
 import streamlit as st
-from langchain_openai import OpenAI
+from langchain_openai import OpenAI, OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain.evaluation.qa import QAEvalChain
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate
 
 def generate_response(
     uploaded_file,
@@ -12,17 +12,17 @@ def generate_response(
     query_text,
     response_text
 ):
-    #format uploaded file
+    # format uploaded file
     documents = [uploaded_file.read().decode()]
     
-    #break it in small chunks
+    # break it in small chunks
     text_splitter = CharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=0
     )
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(
-        openai_api_key=openai_api_key
+        api_key=openai_api_key
     )
     
     # create a vectorstore and store there the texts
@@ -31,74 +31,63 @@ def generate_response(
     # create a retriever interface
     retriever = db.as_retriever()
     
-    # create a real QA dictionary
-    real_qa = [
-        {
-            "question": query_text,
-            "answer": response_text
-        }
-    ]
+    # create LLM
+    llm = OpenAI(api_key=openai_api_key)
     
-    # regular QA chain
-    qachain = RetrievalQA.from_chain_type(
-        llm=OpenAI(openai_api_key=openai_api_key),
-        chain_type="stuff",
-        retriever=retriever,
-        input_key="question"
+    # create prompt template
+    prompt = ChatPromptTemplate.from_template(
+        """Answer the following question based on the provided context:
+        
+Context: {context}
+
+Question: {input}
+
+Answer:"""
     )
     
-    # predictions
-    predictions = qachain.apply(real_qa)
+    # create the retrieval chain
+    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+    retrieval_chain = create_retrieval_chain(retriever, combine_docs_chain)
     
-    # create an eval chain
-    eval_chain = QAEvalChain.from_llm(
-        llm=OpenAI(openai_api_key=openai_api_key)
-    )
-    # have it grade itself
-    graded_outputs = eval_chain.evaluate(
-        real_qa,
-        predictions,
-        question_key="question",
-        prediction_key="result",
-        answer_key="answer"
-    )
+    # get predictions
+    result = retrieval_chain.invoke({"input": query_text})
     
+    # prepare response
     response = {
-        "predictions": predictions,
-        "graded_outputs": graded_outputs
+        "question": query_text,
+        "expected_answer": response_text,
+        "ai_answer": result["answer"]
     }
     
     return response
 
 st.set_page_config(
-    page_title="Evaluate a RAG App"
+    page_title="Evalua una aplicación RAG",
 )
-st.title("Evaluate a RAG App")
+st.title("Evalua una aplicación RAG")
 
-with st.expander("Evaluate the quality of a RAG APP"):
+with st.expander("Evalua la calidad de una aplicación RAG"):
     st.write("""
-        To evaluate the quality of a RAG app, we will
-        ask it questions for which we already know the
-        real answers.
         
-        That way we can see if the app is producing
-        the right answers or if it is hallucinating.
+Para evaluar la calidad de una aplicación RAG, le haremos preguntas cuyas respuestas reales ya conocemos.
+        
+De esa manera podemos ver si la aplicación está produciendo las respuestas correctas o si está alucinando.
     """)
 
 uploaded_file = st.file_uploader(
-    "Upload a .txt document",
+    "Sube un documento de texto para usar como base de conocimiento:",
     type="txt"
 )
 
 query_text = st.text_input(
-    "Enter a question you have already fact-checked:",
-    placeholder="Write your question here",
+    "Ingresa una pregunta que ya hayas verificado:",
+    placeholder="Escribe tu pregunta aquí",
     disabled=not uploaded_file
 )
 
 response_text = st.text_input(
-    "Enter the real answer to the question:",
-    placeholder="Write the confirmed answer here",
+    "Introduzca la respuesta real a la pregunta anterior",
+    placeholder="Escriba la respuesta verificada aquí",
     disabled=not uploaded_file
 )
 
@@ -113,12 +102,12 @@ with st.form(
         disabled=not (uploaded_file and query_text)
     )
     submitted = st.form_submit_button(
-        "Submit",
+        "Enviar",
         disabled=not (uploaded_file and query_text)
     )
     if submitted and openai_api_key.startswith("sk-"):
         with st.spinner(
-            "Wait, please. I am working on it..."
+            "Espere, por favor. Estamos trabajando en ello..."
             ):
             response = generate_response(
                 uploaded_file,
@@ -131,10 +120,8 @@ with st.form(
             
 if len(result):
     st.write("Question")
-    st.info(response["predictions"][0]["question"])
+    st.info(response["question"])
     st.write("Real answer")
-    st.info(response["predictions"][0]["answer"])
+    st.info(response["expected_answer"])
     st.write("Answer provided by the AI App")
-    st.info(response["predictions"][0]["result"])
-    st.write("Therefore, the AI App answer was")
-    st.info(response["graded_outputs"][0]["results"])
+    st.info(response["ai_answer"])
