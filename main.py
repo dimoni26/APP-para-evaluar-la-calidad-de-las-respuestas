@@ -127,12 +127,12 @@ with st.form(
             del openai_api_key
             
 if len(result):
-    st.write("Question")
+    st.write("Pregunta")
     st.info(response["predictions"][0]["question"])
-    st.write("Real answer")
+    st.write("Respuesta Real")
     st.info(response["predictions"][0]["answer"])
-    st.write("Answer provided by the AI App")
+    st.write("Respuesta Generada por la IA App")
     st.info(response["predictions"][0]["result"])
-    st.write("Therefore, the AI App answer was")
+    st.write("Entonces, el resultado de la aplicación de IA es:")
     st.info(response["graded_outputs"][0]["results"])
 
