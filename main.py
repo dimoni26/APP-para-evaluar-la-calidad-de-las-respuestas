@@ -134,5 +134,10 @@ if len(result):
     st.write("Respuesta Generada por la IA App")
     st.info(response["predictions"][0]["result"])
     st.write("Entonces, el resultado de la aplicación de IA es:")
-    st.info(response["graded_outputs"][0]["results"])
+    label = str(response["graded_outputs"][0]["results"]).upper()
+if label == "CORRECT":
+    st.success("✅ Respuesta correcta")
+else:
+    st.error("❌ Respuesta incorrecta")
+
 
